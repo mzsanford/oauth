@@ -43,11 +43,12 @@ module OAuth
         raise OAuth::Problem.new("Invalid authoriation header")
       end
 
-      # strip and unescape
-      params.map! { |v| unescape(v.strip) }
-
-      # strip quotes
-      params.map! { |v| v =~ /^\".*\"$/ ? v[1..-2] : v }
+      params.map! do |v|
+        # strip and unescape
+        val = unescape(v.strip)
+        # strip quotes
+        val.sub(/^\"(.*)\"$/, '\1')
+      end
 
       # convert into a Hash
       Hash[*params.flatten]
