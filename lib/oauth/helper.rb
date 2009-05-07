@@ -57,10 +57,8 @@ module OAuth
       # decompose
       params = header[6,header.length].split(/[,=]/)
 
-      # odd number of arguments … must be a malformed header.
-      if (params.size%2 != 0)
-        raise OAuth::Problem.new("Invalid authoriation header")
-      end
+      # odd number of arguments - must be a malformed header.
+      raise OAuth::Problem.new("Invalid authorization header") if params.size % 2 != 0
 
       params.map! do |v|
         # strip and unescape

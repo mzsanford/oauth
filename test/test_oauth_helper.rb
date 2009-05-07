@@ -4,14 +4,14 @@ require 'oauth/helper'
 class TestOAuthHelper < Test::Unit::TestCase
 
   def test_parse_valid_header
-    header ="OAuth "
-    header << 'realm="http://example.com/method", '
-    header << 'oauth_consumer_key="vince_clortho", '
-    header << 'oauth_token="token_value", '
-    header << 'oauth_signature_method="HMAC-SHA1", '
-    header << 'oauth_signature="signature_here", '
-    header << 'oauth_timestamp="1240004133", oauth_nonce="nonce", '
-    header << 'oauth_version="1.0" '
+    header = 'OAuth ' \
+             'realm="http://example.com/method", ' \
+             'oauth_consumer_key="vince_clortho", ' \
+             'oauth_token="token_value", ' \
+             'oauth_signature_method="HMAC-SHA1", ' \
+             'oauth_signature="signature_here", ' \
+             'oauth_timestamp="1240004133", oauth_nonce="nonce", ' \
+             'oauth_version="1.0" '
 
     params = OAuth::Helper.parse_header(header)
 
@@ -27,24 +27,24 @@ class TestOAuthHelper < Test::Unit::TestCase
 
   def test_parse_header_ill_formed
     header = "OAuth garbage"
+
     assert_raise OAuth::Problem do
       OAuth::Helper.parse_header(header)
     end
   end
 
   def test_parse_header_contains_equals
-    header ="OAuth "
-    header << 'realm="http://example.com/method", '
-    header << 'oauth_consumer_key="vince_clortho", '
-    header << 'oauth_token="token_value", '
-    header << 'oauth_signature_method="HMAC-SHA1", '
-    header << 'oauth_signature="signature_here_with_=", '
-    header << 'oauth_timestamp="1240004133", oauth_nonce="nonce", '
-    header << 'oauth_version="1.0" '
+    header = 'OAuth ' \
+             'realm="http://example.com/method", ' \
+             'oauth_consumer_key="vince_clortho", ' \
+             'oauth_token="token_value", ' \
+             'oauth_signature_method="HMAC-SHA1", ' \
+             'oauth_signature="signature_here_with_=", ' \
+             'oauth_timestamp="1240004133", oauth_nonce="nonce", ' \
+             'oauth_version="1.0" '
 
     assert_raise OAuth::Problem do
       OAuth::Helper.parse_header(header)
     end
   end
-
 end

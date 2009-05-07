@@ -5,7 +5,7 @@ module OAuth
       @available_methods ||= {}
     end
 
-    # Build a signature from a +request+. 
+    # Build a signature from a +request+.
     #
     # Raises UnknownSignatureMethod exception if the signature method is unknown.
     def self.build(request, options = {}, &block)
