@@ -97,10 +97,18 @@ module OAuth
       end
     end
 
+    def get_access_token(request_token, request_options = {}, *arguments)
+      response = token_request(http_method, (access_token_url? ? access_token_url : access_token_path), request_token, request_options, *arguments)
+      OAuth::AccessToken.from_hash(self, response)
+    end
+
     # Makes a request to the service for a new OAuth::RequestToken
     #
     #  @request_token = @consumer.get_request_token
     #
+    # To include application-specific parameters:
+    #
+    #  @request_token = @consumer.get_request_token({}, :foo => "bar")
     def get_request_token(request_options = {}, *arguments)
       response = token_request(http_method, (request_token_url? ? request_token_url : request_token_path), nil, request_options, *arguments)
       OAuth::RequestToken.new(self, response[:oauth_token], response[:oauth_token_secret])
@@ -108,7 +116,10 @@ module OAuth
 
     # Creates, signs and performs an http request.
     # It's recommended to use the OAuth::Token classes to set this up correctly.
-    # The arguments parameters are a hash or string encoded set of parameters if it's a post request as well as optional http headers.
+    # request_options take precedence over consumer-wide options when signing
+    #   a request.
+    # arguments are POST and PUT bodies (a Hash, string-encoded parameters, or
+    #   absent), followed by additional HTTP headers.
     #
     #   @consumer.request(:get,  '/people', @token, { :scheme => :query_string })
     #   @consumer.request(:post, '/people', @token, {}, @person.to_xml, { 'Content-Type' => 'application/xml' })
@@ -159,7 +170,14 @@ module OAuth
       case response.code.to_i
 
       when (200..299)
-        CGI.parse(response.body).inject({}) { |h,(k,v)| h[k.to_sym] = v.first; h }
+        # symbolize keys
+        # TODO this could be considered unexpected behavior; symbols or not?
+        # TODO this also drops subsequent values from multi-valued keys
+        CGI.parse(response.body).inject({}) do |h,(k,v)|
+          h[k.to_sym] = v.first
+          h[k]        = v.first
+          h
+        end
       when (300..399)
         # this is a redirect
         response.error!
