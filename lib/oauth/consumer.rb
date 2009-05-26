@@ -106,12 +106,23 @@ module OAuth
     #
     #  @request_token = @consumer.get_request_token
     #
+    # To include OAuth parameters:
+    #
+    #  @request_token = @consumer.get_request_token \
+    #    :oauth_callback => "http://example.com/cb"
+    #
     # To include application-specific parameters:
     #
     #  @request_token = @consumer.get_request_token({}, :foo => "bar")
+    #
+    # TODO oauth_callback should be a mandatory parameter
     def get_request_token(request_options = {}, *arguments)
+      # if oauth_callback wasn't provided, it is assumed that oauth_verifiers
+      # will be exchanged out of band
+      request_options[:oauth_callback] ||= OAuth::OUT_OF_BAND
+
       response = token_request(http_method, (request_token_url? ? request_token_url : request_token_path), nil, request_options, *arguments)
-      OAuth::RequestToken.new(self, response[:oauth_token], response[:oauth_token_secret])
+      OAuth::RequestToken.from_hash(self, response)
     end
 
     # Creates, signs and performs an http request.
@@ -298,8 +309,19 @@ module OAuth
       if data.is_a?(Hash)
         request.set_form_data(data)
       elsif data
-        request.body = data.to_s
-        request["Content-Length"] = request.body.length
+        if data.respond_to?(:read)
+          request.body_stream = data
+          if data.respond_to?(:length)
+            request["Content-Length"] = data.length
+          elsif data.respond_to?(:stat) && data.stat.respond_to?(:size)
+            request["Content-Length"] = data.stat.size
+          else
+            raise ArgumentError, "Don't know how to send a body_stream that doesn't respond to .length or .stat.size"
+          end
+        else
+          request.body = data.to_s
+          request["Content-Length"] = request.body.length
+        end
       end
 
       request
